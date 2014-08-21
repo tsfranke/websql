@@ -31,7 +31,11 @@ function cliGetResult($connections, $connection, $db, $query, $error)
     }
     else
     {
-        return $result;
+        $output['result'] = $result;
+        $output['info'] = mysqli_info($mysqli);
+        $output['affected_rows'] = mysqli_affected_rows($mysqli);
+
+        return $output;
     }
 }
 
@@ -63,7 +67,7 @@ if(check($_POST['action']))
             {
                 $result = cliGetResult($connections, $connection, $db, 'SHOW DATABASES', $error);
 
-                while($row = mysqli_fetch_assoc($result))
+                while($row = mysqli_fetch_assoc($result['result']))
                 {
                     $output .= "<a href='#' data-db='{$row['Database']}'>+</a> {$row['Database']}<span id='".$row['Database']."_tables'></span><br />";
                 }
@@ -81,7 +85,7 @@ if(check($_POST['action']))
 
                 $result = cliGetResult($connections, $connection, $db, $query, $error);
 
-                while($row = mysqli_fetch_assoc($result))
+                while($row = mysqli_fetch_assoc($result['result']))
                 {
                     $output .= "&nbsp;&nbsp;<a href='#' data-table='{$row['table_name']}' data-schema='{$_POST['db']}'>+</a> {$row['table_name']}<span id='".$row['table_name']."_columns'></span><br />";
                 }
@@ -97,7 +101,7 @@ if(check($_POST['action']))
 
                 $result = cliGetResult($connections, $connection, $db, $query, $error);
 
-                while($row = mysqli_fetch_assoc($result))
+                while($row = mysqli_fetch_assoc($result['result']))
                 {
                     $output .= "&nbsp;&nbsp;&nbsp;&nbsp;&bull; <strong>{$row['Field']}</strong> ".strtoupper($row['Type'])."<br />";
                 }
@@ -115,7 +119,7 @@ if(check($_POST['action']))
 
                 // header row
                 $output .= "<thead><tr>";
-                $row = mysqli_fetch_assoc($result);
+                $row = mysqli_fetch_assoc($result['result']);
                 foreach ($row as $col => $value)
                 {
                     $output .= "<th>{$col}</th>";
@@ -125,7 +129,7 @@ if(check($_POST['action']))
                 // data rows
                 $output .= "<tbody>";
                 mysqli_data_seek($result, 0);
-                while($row = mysqli_fetch_assoc($result))
+                while($row = mysqli_fetch_assoc($result['result']))
                 {
                     $output .= "<tr>";
                     foreach($row as $col => $value)
@@ -136,6 +140,16 @@ if(check($_POST['action']))
                 }
 
                 $output .= "</tbody></table>";
+
+                if($result['info'] != '')
+                {
+                    $output .= "<br />INFO: {$result['info']}";
+                }
+
+                if($result['affected_rows'] != '')
+                {
+                    $output .= "<br />AFFECTED ROWS: {$result['affected_rows']}";
+                }
             }
         }
     }
